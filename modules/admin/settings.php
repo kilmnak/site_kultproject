@@ -350,13 +350,11 @@ ob_start();
         </div>
     </nav>
 
-    <main>
+    <main class="flex-grow-1">
         <?php echo $content; ?>
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+    <?php include 'admin-footer.php'; ?>
 <?php
 echo ob_get_clean();
 ?>

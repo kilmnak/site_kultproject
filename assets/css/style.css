@@ -11,9 +11,35 @@
     --dark-color: #5a5c69;
 }
 
+/* Sticky Footer с Bootstrap классами */
+html, body {
+    height: 100%;
+}
+
 body {
     font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     background-color: #f8f9fc;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+}
+
+/* Основной контент растягивается на всю доступную высоту */
+.flex-grow-1 {
+    flex: 1;
+    min-height: 0; /* Предотвращает переполнение */
+}
+
+/* Дополнительная поддержка для старых браузеров */
+@supports not (display: flex) {
+    body {
+        display: block;
+    }
+    
+    .flex-grow-1 {
+        min-height: calc(100vh - 200px); /* Примерная высота навбара + футера */
+    }
 }
 
 /* Навигация */
