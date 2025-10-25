@@ -17,10 +17,10 @@ $bookings = $db->fetchAll(
         e.title as event_title,
         e.event_date,
         e.venue,
-        COUNT(to.id) as tickets_count
+        COUNT(`to`.id) as tickets_count
      FROM bookings b
      JOIN events e ON b.event_id = e.id
-     LEFT JOIN ticket_orders to ON b.id = to.booking_id
+     LEFT JOIN ticket_orders `to` ON b.id = `to`.booking_id
      WHERE b.user_id = ?
      GROUP BY b.id
      ORDER BY b.created_at DESC",

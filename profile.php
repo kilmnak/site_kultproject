@@ -60,8 +60,8 @@ $userStats = $db->fetch(
         SUM(p.amount) as total_spent
      FROM users u
      LEFT JOIN bookings b ON u.id = b.user_id AND b.status = 'confirmed'
-     LEFT JOIN ticket_orders to ON b.id = to.booking_id
-     LEFT JOIN tickets t ON to.id = t.order_id
+     LEFT JOIN ticket_orders `to` ON b.id = `to`.booking_id
+     LEFT JOIN tickets t ON `to`.id = t.order_id
      LEFT JOIN payments p ON b.id = p.booking_id AND p.payment_status = 'completed'
      WHERE u.id = ?",
     [$user['id']]

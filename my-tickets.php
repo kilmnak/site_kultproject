@@ -23,10 +23,10 @@ $tickets = $db->fetchAll(
         pc.name as category_name,
         pc.price
      FROM tickets t
-     JOIN ticket_orders to ON t.order_id = to.id
-     JOIN bookings b ON to.booking_id = b.id
+     JOIN ticket_orders `to` ON t.order_id = `to`.id
+     JOIN bookings b ON `to`.booking_id = b.id
      JOIN events e ON b.event_id = e.id
-     JOIN seats s ON to.seat_id = s.id
+     JOIN seats s ON `to`.seat_id = s.id
      LEFT JOIN price_categories pc ON s.price_category_id = pc.id
      WHERE b.user_id = ?
      ORDER BY e.event_date DESC, t.created_at DESC",

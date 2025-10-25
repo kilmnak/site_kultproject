@@ -83,7 +83,7 @@ ob_start();
     <div class="col-12">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1 class="h3 mb-0 text-gray-800">Управление мероприятиями</h1>
-            <a href="?action=create" class="btn btn-primary">
+            <a href="?page=events&action=create" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Создать мероприятие
             </a>
         </div>
@@ -188,10 +188,10 @@ ob_start();
             <div class="row align-items-center">
                 <div class="col-md-6">
                     <div class="btn-group" role="group">
-                        <a href="?action=list&filter=all" class="btn btn-outline-primary active">Все</a>
-                        <a href="?action=list&filter=published" class="btn btn-outline-success">Опубликованные</a>
-                        <a href="?action=list&filter=draft" class="btn btn-outline-warning">Черновики</a>
-                        <a href="?action=list&filter=cancelled" class="btn btn-outline-danger">Отмененные</a>
+                        <a href="?page=events&action=list&filter=all" class="btn btn-outline-primary active">Все</a>
+                        <a href="?page=events&action=list&filter=published" class="btn btn-outline-success">Опубликованные</a>
+                        <a href="?page=events&action=list&filter=draft" class="btn btn-outline-warning">Черновики</a>
+                        <a href="?page=events&action=list&filter=cancelled" class="btn btn-outline-danger">Отмененные</a>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -228,7 +228,7 @@ ob_start();
                                 <td colspan="7" class="text-center text-muted py-4">
                                     <i class="fas fa-calendar-alt fa-3x mb-3"></i>
                                     <p>Мероприятий пока нет</p>
-                                    <a href="?action=create" class="btn btn-primary">Создать первое мероприятие</a>
+                                    <a href="?page=events&action=create" class="btn btn-primary">Создать первое мероприятие</a>
                                 </td>
                             </tr>
                         <?php else: ?>
@@ -267,7 +267,7 @@ ob_start();
                                     </td>
                                     <td>
                                         <div class="btn-group btn-group-sm">
-                                            <a href="?action=edit&id=<?php echo $event['id']; ?>" class="btn btn-outline-primary">
+                                            <a href="?page=events&action=edit&id=<?php echo $event['id']; ?>" class="btn btn-outline-primary">
                                                 <i class="fas fa-edit"></i>
                                             </a>
                                             <button type="button" class="btn btn-outline-danger" onclick="confirmDelete(<?php echo $event['id']; ?>)">
@@ -373,7 +373,7 @@ ob_start();
                         </div>
 
                         <div class="d-flex justify-content-between">
-                            <a href="?action=list" class="btn btn-secondary">
+                            <a href="?page=events&action=list" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Назад к списку
                             </a>
                             <button type="submit" class="btn btn-primary">
