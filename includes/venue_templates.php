@@ -446,6 +446,8 @@ class VenueTemplates {
     align-items: center;
     gap: 15px;
     padding: 8px 0;
+    width: 100%;
+    min-width: 0;
 }
 
 .row-label {
@@ -458,23 +460,27 @@ class VenueTemplates {
 
 .seats-container {
     display: flex;
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 2px;
+    flex-wrap: nowrap;
     align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    max-width: 100%;
 }
 
 .seat {
-    width: 35px;
-    height: 35px;
-    border-radius: 6px;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
+    font-size: 9px;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.2s ease;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
+    flex-shrink: 0;
 }
 
 .seat:hover {
@@ -524,7 +530,7 @@ class VenueTemplates {
 }
 
 .seat-number {
-    font-size: 10px;
+    font-size: 8px;
     line-height: 1;
 }
 
@@ -545,18 +551,39 @@ class VenueTemplates {
     .seats-container {
         width: 100%;
         justify-content: flex-start;
+        gap: 1px;
     }
     
     .seat {
-        width: 30px;
-        height: 30px;
-        font-size: 10px;
+        width: 24px;
+        height: 24px;
+        font-size: 8px;
+    }
+    
+    .seat-number {
+        font-size: 7px;
     }
     
     .screen, .stage {
         padding: 10px 20px;
         font-size: 16px;
         min-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .seat {
+        width: 20px;
+        height: 20px;
+        font-size: 7px;
+    }
+    
+    .seat-number {
+        font-size: 6px;
+    }
+    
+    .seats-container {
+        gap: 1px;
     }
 }
 </style>
