@@ -10,24 +10,24 @@ class VenueTemplates {
         return [
             'club' => [
                 'name' => 'Клуб',
-                'description' => 'Клуб с танцполом, VIP зоной и вторым этажом',
+                'description' => 'Клуб с VIP зоной сверху, танцполом снизу и вторым этажом по краям',
                 'zones' => [
-                    'dance_floor' => [
-                        'name' => 'Танцпол',
-                        'description' => 'Основная танцевальная зона',
-                        'capacity' => 200,
-                        'price_multiplier' => 1.0
-                    ],
                     'vip' => [
                         'name' => 'VIP зона',
-                        'description' => 'Премиум зона над танцполом',
-                        'capacity' => 50,
+                        'description' => 'Премиум зона сверху по центру',
+                        'capacity' => 80,
                         'price_multiplier' => 2.5
+                    ],
+                    'dance_floor' => [
+                        'name' => 'Танцпол',
+                        'description' => 'Основная танцевальная зона снизу по центру',
+                        'capacity' => 150,
+                        'price_multiplier' => 1.0
                     ],
                     'second_floor' => [
                         'name' => 'Второй этаж',
                         'description' => 'Балконы по краям зала',
-                        'capacity' => 100,
+                        'capacity' => 120,
                         'price_multiplier' => 1.8
                     ]
                 ]
@@ -83,20 +83,8 @@ class VenueTemplates {
     public static function createClubLayout($eventId, $basePrice, $db) {
         $seats = [];
         
-        // Танцпол - основная зона (200 мест)
-        for ($i = 1; $i <= 200; $i++) {
-            $seats[] = [
-                'event_id' => $eventId,
-                'seat_number' => "DF{$i}",
-                'row_number' => 'Танцпол',
-                'section' => 'Танцпол',
-                'price' => $basePrice * 1.0,
-                'status' => 'available'
-            ];
-        }
-        
-        // VIP зона - премиум места (50 мест)
-        for ($i = 1; $i <= 50; $i++) {
+        // VIP зона - премиум места сверху по центру (80 мест)
+        for ($i = 1; $i <= 80; $i++) {
             $seats[] = [
                 'event_id' => $eventId,
                 'seat_number' => "VIP{$i}",
@@ -107,8 +95,20 @@ class VenueTemplates {
             ];
         }
         
-        // Второй этаж - балконы (100 мест)
-        for ($i = 1; $i <= 100; $i++) {
+        // Танцпол - основная зона снизу по центру (150 мест)
+        for ($i = 1; $i <= 150; $i++) {
+            $seats[] = [
+                'event_id' => $eventId,
+                'seat_number' => "DF{$i}",
+                'row_number' => 'Танцпол',
+                'section' => 'Танцпол',
+                'price' => $basePrice * 1.0,
+                'status' => 'available'
+            ];
+        }
+        
+        // Второй этаж - балконы по краям (120 мест)
+        for ($i = 1; $i <= 120; $i++) {
             $seats[] = [
                 'event_id' => $eventId,
                 'seat_number' => "SF{$i}",
@@ -253,9 +253,9 @@ class VenueTemplates {
         $html .= '<div class="stage">СЦЕНА</div>';
         $html .= '</div>';
         
-        // VIP зона (над танцполом)
+        // VIP зона (сверху по центру)
         $html .= '<div class="vip-zone mb-3">';
-        $html .= '<h6 class="zone-title">VIP зона</h6>';
+        $html .= '<h6 class="zone-title">VIP зона (сверху по центру)</h6>';
         $html .= '<div class="seats-grid vip-grid">';
         
         $vipSeats = array_filter($seats, function($seat) {
@@ -272,9 +272,9 @@ class VenueTemplates {
         
         $html .= '</div></div>';
         
-        // Танцпол (основная зона)
+        // Танцпол (снизу по центру)
         $html .= '<div class="dance-floor-zone mb-3">';
-        $html .= '<h6 class="zone-title">Танцпол</h6>';
+        $html .= '<h6 class="zone-title">Танцпол (снизу по центру)</h6>';
         $html .= '<div class="seats-grid dance-grid">';
         
         $danceSeats = array_filter($seats, function($seat) {
@@ -293,7 +293,7 @@ class VenueTemplates {
         
         // Второй этаж (по краям)
         $html .= '<div class="second-floor-zone">';
-        $html .= '<h6 class="zone-title">Второй этаж</h6>';
+        $html .= '<h6 class="zone-title">Второй этаж (по краям)</h6>';
         $html .= '<div class="seats-grid second-floor-grid">';
         
         $secondFloorSeats = array_filter($seats, function($seat) {

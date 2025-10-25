@@ -596,9 +596,9 @@ document.addEventListener('DOMContentLoaded', function() {
             'club': {
                 name: 'Клуб',
                 zones: [
-                    { name: 'VIP зона', capacity: 50, color: '#ffd700' },
-                    { name: 'Танцпол', capacity: 200, color: '#17a2b8' },
-                    { name: 'Второй этаж', capacity: 100, color: '#6f42c1' }
+                    { name: 'VIP зона (сверху по центру)', capacity: 80, color: '#ffd700' },
+                    { name: 'Танцпол (снизу по центру)', capacity: 150, color: '#17a2b8' },
+                    { name: 'Второй этаж (по краям)', capacity: 120, color: '#6f42c1' }
                 ]
             },
             'cinema': {
@@ -631,13 +631,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="zones-preview">
                         <div class="zone vip-zone mb-2">
-                            <span class="badge" style="background-color: #ffd700; color: #000;">VIP зона (50 мест)</span>
+                            <span class="badge" style="background-color: #ffd700; color: #000;">VIP зона (сверху по центру) - 80 мест</span>
                         </div>
                         <div class="zone dance-zone mb-2">
-                            <span class="badge" style="background-color: #17a2b8;">Танцпол (200 мест)</span>
+                            <span class="badge" style="background-color: #17a2b8;">Танцпол (снизу по центру) - 150 мест</span>
                         </div>
                         <div class="zone second-floor-zone">
-                            <span class="badge" style="background-color: #6f42c1;">Второй этаж (100 мест)</span>
+                            <span class="badge" style="background-color: #6f42c1;">Второй этаж (по краям) - 120 мест</span>
                         </div>
                     </div>
                 </div>

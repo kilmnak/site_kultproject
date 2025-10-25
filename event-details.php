@@ -597,11 +597,12 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 
 .vip-grid {
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
     background: rgba(255, 215, 0, 0.1);
     padding: 15px;
     border-radius: 10px;
     border: 2px solid #ffd700;
+    text-align: center;
 }
 
 .dance-grid {
@@ -610,14 +611,16 @@ document.addEventListener('DOMContentLoaded', function() {
     padding: 20px;
     border-radius: 10px;
     border: 2px solid #17a2b8;
+    text-align: center;
 }
 
 .second-floor-grid {
-    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(65px, 1fr));
     background: rgba(111, 66, 193, 0.1);
     padding: 15px;
     border-radius: 10px;
     border: 2px solid #6f42c1;
+    text-align: center;
 }
 
 .seat {
