@@ -23,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'base_price' => floatval($_POST['base_price']),
             'status' => $_POST['status'],
             'image_url' => sanitizeInput($_POST['image_url']),
-            'venue_layout' => $_POST['venue_layout'] ?? 'none'
+            'venue_layout' => isset($_POST['venue_layout']) ? $_POST['venue_layout'] : 'none'
         ];
 
         if ($_POST['action'] === 'create') {
@@ -66,7 +66,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $messageType = 'danger';
             }
         } elseif ($_POST['action'] === 'update') {
+            // Получаем текущее мероприятие для сравнения схемы рассадки
+            $currentEvent = $eventManager->getEvent($eventId);
+            $currentLayout = $currentEvent['venue_layout'] ?? 'none';
+            $newLayout = $data['venue_layout'] ?? 'none';
+            
+            // Отладочная информация
+            error_log("Updating event ID: $eventId");
+            error_log("Current layout: $currentLayout, New layout: $newLayout");
+            error_log("Update data: " . json_encode($data));
+            
             if ($eventManager->updateEvent($eventId, $data)) {
+                // Если схема рассадки изменилась, обновляем места
+                if ($currentLayout !== $newLayout && $newLayout !== 'none') {
+                    // Удаляем старые места и ценовые категории
+                    $db->query("DELETE FROM seats WHERE event_id = ?", [$eventId]);
+                    $db->query("DELETE FROM price_categories WHERE event_id = ?", [$eventId]);
+                    
+                    // Создаем новые места по новому шаблону
+                    $seats = VenueTemplates::createLayoutByTemplate($newLayout, $eventId, $data['base_price'], $db);
+                    
+                    // Создаем ценовые категории
+                    $templates = VenueTemplates::getTemplates();
+                    $template = $templates[$newLayout] ?? null;
+                    
+                    if ($template) {
+                        foreach ($template['zones'] as $zoneKey => $zone) {
+                            $db->query(
+                                "INSERT INTO price_categories (event_id, name, price, description) VALUES (?, ?, ?, ?)",
+                                [$eventId, $zone['name'], $data['base_price'] * $zone['price_multiplier'], $zone['description']]
+                            );
+                            $categoryId = $db->lastInsertId();
+                            
+                            // Создаем места с категорией
+                            foreach ($seats as $seat) {
+                                if ($seat['section'] === $zone['name']) {
+                                    $db->query(
+                                        "INSERT INTO seats (event_id, seat_number, `row_number`, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
+                                        [$seat['event_id'], $seat['seat_number'], $seat['row_number'], $seat['section'], $categoryId, $seat['status']]
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 $message = 'Мероприятие успешно обновлено!';
                 $messageType = 'success';
                 $action = 'list';

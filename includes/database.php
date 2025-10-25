@@ -38,6 +38,10 @@ class Database {
         return $this->pdo;
     }
     
+    public function getPdo() {
+        return $this->pdo;
+    }
+    
     public function query($sql, $params = []) {
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($params);

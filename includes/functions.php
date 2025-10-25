@@ -187,7 +187,7 @@ class EventManager {
                 max_capacity = ?, base_price = ?, status = ?, image_url = ?, venue_layout = ?, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?";
         
-        return $this->db->query($sql, [
+        $stmt = $this->db->query($sql, [
             $data['title'],
             $data['description'],
             $data['event_date'],
@@ -200,6 +200,8 @@ class EventManager {
             $data['venue_layout'] ?? 'none',
             $id
         ]);
+        
+        return $stmt->rowCount() > 0;
     }
     
     public function getEvent($id) {
