@@ -1,5 +1,6 @@
 -- Создание базы данных для системы "КультПросвет"
 
+DROP DATABASE IF EXISTS kultproject;
 CREATE DATABASE IF NOT EXISTS kultproject CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE kultproject;
 
@@ -28,7 +29,7 @@ CREATE TABLE events (
     organizer_id INT,
     max_capacity INT NOT NULL,
     base_price DECIMAL(10,2) NOT NULL,
-    status ENUM('draft', 'published', 'cancelled', 'completed') DEFAULT 'draft',
+    `status` ENUM('draft', 'published', 'cancelled', 'completed') DEFAULT 'draft',
     image_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -39,7 +40,7 @@ CREATE TABLE events (
 CREATE TABLE price_categories (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT NOT NULL,
-    name VARCHAR(100) NOT NULL,
+    `name` VARCHAR(100) NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     description TEXT,
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
@@ -59,10 +60,10 @@ CREATE TABLE seats (
     id INT AUTO_INCREMENT PRIMARY KEY,
     event_id INT NOT NULL,
     seat_number VARCHAR(20) NOT NULL,
-    row_number VARCHAR(10),
+    `row_number` VARCHAR(10),
     section VARCHAR(50),
     price_category_id INT,
-    status ENUM('available', 'booked', 'sold', 'blocked') DEFAULT 'available',
+    `status` ENUM('available', 'booked', 'sold', 'blocked') DEFAULT 'available',
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     FOREIGN KEY (price_category_id) REFERENCES price_categories(id) ON DELETE SET NULL,
     UNIQUE KEY unique_seat (event_id, seat_number)
@@ -74,7 +75,7 @@ CREATE TABLE bookings (
     user_id INT NOT NULL,
     event_id INT NOT NULL,
     booking_code VARCHAR(20) UNIQUE NOT NULL,
-    status ENUM('pending', 'confirmed', 'cancelled', 'expired') DEFAULT 'pending',
+    `status` ENUM('pending', 'confirmed', 'cancelled', 'expired') DEFAULT 'pending',
     expires_at TIMESTAMP NOT NULL,
     total_amount DECIMAL(10,2) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -98,7 +99,7 @@ CREATE TABLE tickets (
     order_id INT NOT NULL,
     ticket_code VARCHAR(50) UNIQUE NOT NULL,
     qr_code VARCHAR(500),
-    status ENUM('active', 'used', 'cancelled') DEFAULT 'active',
+    `status` ENUM('active', 'used', 'cancelled') DEFAULT 'active',
     used_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (order_id) REFERENCES ticket_orders(id) ON DELETE CASCADE
@@ -121,10 +122,10 @@ CREATE TABLE payments (
 CREATE TABLE notifications (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    type ENUM('email', 'sms', 'push') NOT NULL,
+    `type` ENUM('email', 'sms', 'push') NOT NULL,
     subject VARCHAR(255),
     message TEXT NOT NULL,
-    status ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
+    `status` ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
     sent_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -146,7 +147,7 @@ CREATE TABLE reviews (
 -- Таблица партнеров
 CREATE TABLE partners (
     id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
     contact_person VARCHAR(255),
     email VARCHAR(255),
     phone VARCHAR(20),
