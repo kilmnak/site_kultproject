@@ -14,6 +14,14 @@ $page = max(1, intval($_GET['page'] ?? 1));
 $limit = 12;
 $offset = ($page - 1) * $limit;
 
+// Проверяем, является ли пользователь администратором
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+
+// Если пользователь не администратор, скрываем черновики
+if (!$isAdmin && $status === 'draft') {
+    $status = 'published';
+}
+
 // Получаем мероприятия
 $events = $eventManager->getEvents($status, $limit, $offset);
 
@@ -51,7 +59,9 @@ ob_start();
                 <input type="hidden" name="search" value="<?php echo htmlspecialchars($search); ?>">
                 <select name="status" class="form-select" onchange="this.form.submit()">
                     <option value="published" <?php echo $status === 'published' ? 'selected' : ''; ?>>Опубликованные</option>
-                    <option value="draft" <?php echo $status === 'draft' ? 'selected' : ''; ?>>Черновики</option>
+                    <?php if ($isAdmin): ?>
+                        <option value="draft" <?php echo $status === 'draft' ? 'selected' : ''; ?>>Черновики</option>
+                    <?php endif; ?>
                     <option value="cancelled" <?php echo $status === 'cancelled' ? 'selected' : ''; ?>>Отмененные</option>
                     <option value="completed" <?php echo $status === 'completed' ? 'selected' : ''; ?>>Завершенные</option>
                 </select>
@@ -83,17 +93,19 @@ ob_start();
                         <div class="card-body d-flex flex-column">
                             <div class="d-flex justify-content-between align-items-start mb-2">
                                 <h5 class="card-title"><?php echo htmlspecialchars($event['title']); ?></h5>
-                                <span class="badge bg-<?php echo $event['status'] === 'published' ? 'success' : ($event['status'] === 'draft' ? 'warning' : 'secondary'); ?>">
-                                    <?php 
-                                    $statusLabels = [
-                                        'published' => 'Опубликовано',
-                                        'draft' => 'Черновик',
-                                        'cancelled' => 'Отменено',
-                                        'completed' => 'Завершено'
-                                    ];
-                                    echo $statusLabels[$event['status']] ?? $event['status'];
-                                    ?>
-                                </span>
+                                <?php if ($isAdmin || $event['status'] !== 'draft'): ?>
+                                    <span class="badge bg-<?php echo $event['status'] === 'published' ? 'success' : ($event['status'] === 'draft' ? 'warning' : 'secondary'); ?>">
+                                        <?php 
+                                        $statusLabels = [
+                                            'published' => 'Опубликовано',
+                                            'draft' => 'Черновик',
+                                            'cancelled' => 'Отменено',
+                                            'completed' => 'Завершено'
+                                        ];
+                                        echo $statusLabels[$event['status']] ?? $event['status'];
+                                        ?>
+                                    </span>
+                                <?php endif; ?>
                             </div>
                             
                             <p class="card-text text-muted small">

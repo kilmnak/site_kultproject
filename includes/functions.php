@@ -162,8 +162,8 @@ class EventManager {
     }
     
     public function createEvent($data) {
-        $sql = "INSERT INTO events (title, description, event_date, venue, address, max_capacity, base_price, organizer_id, status, image_url) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        $sql = "INSERT INTO events (title, description, event_date, venue, address, max_capacity, base_price, organizer_id, status, image_url, venue_layout) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         $this->db->query($sql, [
             $data['title'],
@@ -175,7 +175,8 @@ class EventManager {
             $data['base_price'],
             $data['organizer_id'] ?? null,
             $data['status'] ?? 'draft',
-            $data['image_url'] ?? null
+            $data['image_url'] ?? null,
+            $data['venue_layout'] ?? 'none'
         ]);
         
         return $this->db->lastInsertId();
@@ -183,7 +184,7 @@ class EventManager {
     
     public function updateEvent($id, $data) {
         $sql = "UPDATE events SET title = ?, description = ?, event_date = ?, venue = ?, address = ?, 
-                max_capacity = ?, base_price = ?, status = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP 
+                max_capacity = ?, base_price = ?, status = ?, image_url = ?, venue_layout = ?, updated_at = CURRENT_TIMESTAMP 
                 WHERE id = ?";
         
         return $this->db->query($sql, [
@@ -196,6 +197,7 @@ class EventManager {
             $data['base_price'],
             $data['status'],
             $data['image_url'] ?? null,
+            $data['venue_layout'] ?? 'none',
             $id
         ]);
     }

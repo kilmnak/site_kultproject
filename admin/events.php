@@ -1,5 +1,7 @@
 <?php
 // admin/events.php - Управление мероприятиями (CRUD)
+require_once '../includes/venue_templates.php';
+
 $db = Database::getInstance();
 $eventManager = new EventManager();
 
@@ -20,12 +22,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'max_capacity' => intval($_POST['max_capacity']),
             'base_price' => floatval($_POST['base_price']),
             'status' => $_POST['status'],
-            'image_url' => sanitizeInput($_POST['image_url'])
+            'image_url' => sanitizeInput($_POST['image_url']),
+            'venue_layout' => $_POST['venue_layout'] ?? 'none'
         ];
 
         if ($_POST['action'] === 'create') {
             $newId = $eventManager->createEvent($data);
             if ($newId) {
+                // Создаем места по выбранному шаблону
+                if ($data['venue_layout'] !== 'none') {
+                    $seats = VenueTemplates::createLayoutByTemplate($data['venue_layout'], $newId, $data['base_price'], $db);
+                    
+                    // Создаем ценовые категории
+                    $templates = VenueTemplates::getTemplates();
+                    $template = $templates[$data['venue_layout']] ?? null;
+                    
+                    if ($template) {
+                        foreach ($template['zones'] as $zoneKey => $zone) {
+                            $db->query(
+                                "INSERT INTO price_categories (event_id, name, price, description) VALUES (?, ?, ?, ?)",
+                                [$newId, $zone['name'], $data['base_price'] * $zone['price_multiplier'], $zone['description']]
+                            );
+                            $categoryId = $db->lastInsertId();
+                            
+                            // Обновляем места с категорией
+                            foreach ($seats as $seat) {
+                                if ($seat['section'] === $zone['name']) {
+                                    $db->query(
+                                        "INSERT INTO seats (event_id, seat_number, row_number, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
+                                        [$seat['event_id'], $seat['seat_number'], $seat['row_number'], $seat['section'], $categoryId, $seat['status']]
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+                
                 $message = 'Мероприятие успешно создано!';
                 $messageType = 'success';
                 $action = 'list';
@@ -372,6 +404,38 @@ ob_start();
                             </div>
                         </div>
 
+                        <!-- Схема рассадки -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="venue_layout" class="form-label">Схема рассадки</label>
+                                    <select class="form-select" id="venue_layout" name="venue_layout">
+                                        <option value="none" <?php echo ($eventToEdit['venue_layout'] ?? 'none') === 'none' ? 'selected' : ''; ?>>Без схемы рассадки</option>
+                                        <?php 
+                                        $templates = VenueTemplates::getTemplates();
+                                        foreach ($templates as $key => $template): 
+                                        ?>
+                                            <option value="<?php echo $key; ?>" <?php echo ($eventToEdit['venue_layout'] ?? '') === $key ? 'selected' : ''; ?>>
+                                                <?php echo $template['name']; ?> - <?php echo $template['description']; ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <div class="form-text">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Выберите схему рассадки для автоматического создания мест и ценовых категорий
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Предварительный просмотр схемы -->
+                        <div id="layoutPreview" class="mb-3" style="display: none;">
+                            <h6>Предварительный просмотр схемы:</h6>
+                            <div class="border rounded p-3 bg-light" id="previewContent">
+                                <!-- Здесь будет отображаться схема -->
+                            </div>
+                        </div>
+
                         <div class="d-flex justify-content-between">
                             <a href="?page=events&action=list" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left me-2"></i>Назад к списку
@@ -457,6 +521,119 @@ document.getElementById('searchInput').addEventListener('input', function() {
     });
 });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const venueLayoutSelect = document.getElementById('venue_layout');
+    const layoutPreview = document.getElementById('layoutPreview');
+    const previewContent = document.getElementById('previewContent');
+    
+    if (venueLayoutSelect) {
+        venueLayoutSelect.addEventListener('change', function() {
+            const selectedLayout = this.value;
+            
+            if (selectedLayout === 'none') {
+                layoutPreview.style.display = 'none';
+            } else {
+                layoutPreview.style.display = 'block';
+                showLayoutPreview(selectedLayout);
+            }
+        });
+        
+        // Показываем превью при загрузке страницы, если уже выбрана схема
+        if (venueLayoutSelect.value !== 'none') {
+            layoutPreview.style.display = 'block';
+            showLayoutPreview(venueLayoutSelect.value);
+        }
+    }
+    
+    function showLayoutPreview(layoutType) {
+        const templates = {
+            'club': {
+                name: 'Клуб',
+                zones: [
+                    { name: 'VIP зона', capacity: 50, color: '#ffd700' },
+                    { name: 'Танцпол', capacity: 200, color: '#17a2b8' },
+                    { name: 'Второй этаж', capacity: 100, color: '#6f42c1' }
+                ]
+            },
+            'cinema': {
+                name: 'Кинотеатр',
+                zones: [
+                    { name: 'Партер', capacity: 150, color: '#6c757d' },
+                    { name: 'Балкон', capacity: 50, color: '#6c757d' }
+                ]
+            },
+            'theater': {
+                name: 'Театр',
+                zones: [
+                    { name: 'Партер', capacity: 200, color: '#dc3545' },
+                    { name: 'Бельэтаж', capacity: 100, color: '#dc3545' },
+                    { name: 'Балкон', capacity: 80, color: '#dc3545' }
+                ]
+            }
+        };
+        
+        const template = templates[layoutType];
+        if (!template) return;
+        
+        let html = `<h6>${template.name}</h6>`;
+        
+        if (layoutType === 'club') {
+            html += `
+                <div class="club-preview">
+                    <div class="stage-preview mb-3">
+                        <div class="stage">СЦЕНА</div>
+                    </div>
+                    <div class="zones-preview">
+                        <div class="zone vip-zone mb-2">
+                            <span class="badge" style="background-color: #ffd700; color: #000;">VIP зона (50 мест)</span>
+                        </div>
+                        <div class="zone dance-zone mb-2">
+                            <span class="badge" style="background-color: #17a2b8;">Танцпол (200 мест)</span>
+                        </div>
+                        <div class="zone second-floor-zone">
+                            <span class="badge" style="background-color: #6f42c1;">Второй этаж (100 мест)</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        } else {
+            html += '<div class="zones-preview">';
+            template.zones.forEach(zone => {
+                html += `<div class="zone mb-2">
+                    <span class="badge" style="background-color: ${zone.color};">
+                        ${zone.name} (${zone.capacity} мест)
+                    </span>
+                </div>`;
+            });
+            html += '</div>';
+        }
+        
+        previewContent.innerHTML = html;
+    }
+});
+</script>
+
+<style>
+.club-preview .stage {
+    background: #343a40;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.zones-preview .zone {
+    padding: 5px 0;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 8px 12px;
+}
+</style>
 
 <?php
 $content = ob_get_clean();

@@ -31,6 +31,7 @@ CREATE TABLE events (
     base_price DECIMAL(10,2) NOT NULL,
     `status` ENUM('draft', 'published', 'cancelled', 'completed') DEFAULT 'draft',
     image_url VARCHAR(500),
+    venue_layout ENUM('none', 'club', 'cinema', 'theater') DEFAULT 'none',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE SET NULL
