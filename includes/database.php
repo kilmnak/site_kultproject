@@ -1,5 +1,10 @@
 <?php
-require_once 'config.php';
+// Определяем правильный путь к config.php
+$configPath = __DIR__ . '/../config.php';
+if (!file_exists($configPath)) {
+    $configPath = 'config.php'; // Fallback для случаев, когда файл вызывается из корня
+}
+require_once $configPath;
 
 class Database {
     private static $instance = null;

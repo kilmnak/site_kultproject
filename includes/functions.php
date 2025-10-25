@@ -1,6 +1,11 @@
 <?php
-require_once 'config.php';
-require_once 'includes/database.php';
+// Определяем правильный путь к config.php
+$configPath = __DIR__ . '/../config.php';
+if (!file_exists($configPath)) {
+    $configPath = 'config.php'; // Fallback для случаев, когда файл вызывается из корня
+}
+require_once $configPath;
+require_once __DIR__ . '/database.php';
 
 class Auth {
     private $db;
@@ -92,7 +97,7 @@ class Auth {
     
     public function requireRole($requiredRole) {
         if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role'])) {
-            header('Location: /admin-login.php');
+            header('Location: ../admin-login.php');
             exit;
         }
         
@@ -100,12 +105,12 @@ class Auth {
         
         // Проверяем права доступа
         if ($requiredRole === 'admin' && $userRole !== 'admin') {
-            header('Location: /admin-login.php?error=access_denied');
+            header('Location: ../admin-login.php?error=access_denied');
             exit;
         }
         
         if ($requiredRole === 'manager' && !in_array($userRole, ['admin', 'manager'])) {
-            header('Location: /admin-login.php?error=access_denied');
+            header('Location: ../admin-login.php?error=access_denied');
             exit;
         }
     }
