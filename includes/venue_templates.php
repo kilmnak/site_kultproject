@@ -334,9 +334,9 @@ class VenueTemplates {
         }
         
         foreach ($seatsByRow as $rowNumber => $rowSeats) {
-            $html .= '<div class="row mb-2">';
-            $html .= '<div class="col-2"><strong>Ряд ' . $rowNumber . '</strong></div>';
-            $html .= '<div class="col-10">';
+            $html .= '<div class="cinema-row mb-2">';
+            $html .= '<div class="row-label"><strong>Ряд ' . $rowNumber . '</strong></div>';
+            $html .= '<div class="seats-container">';
             
             foreach ($rowSeats as $seat) {
                 $statusClass = self::getSeatStatusClass($seat['status']);
@@ -373,9 +373,9 @@ class VenueTemplates {
         }
         
         foreach ($seatsByRow as $rowNumber => $rowSeats) {
-            $html .= '<div class="row mb-2">';
-            $html .= '<div class="col-2"><strong>Ряд ' . $rowNumber . '</strong></div>';
-            $html .= '<div class="col-10">';
+            $html .= '<div class="theater-row mb-2">';
+            $html .= '<div class="row-label"><strong>Ряд ' . $rowNumber . '</strong></div>';
+            $html .= '<div class="seats-container">';
             
             foreach ($rowSeats as $seat) {
                 $statusClass = self::getSeatStatusClass($seat['status']);
@@ -411,3 +411,152 @@ class VenueTemplates {
     }
 }
 ?>
+
+<style>
+/* Стили для схем рассадки */
+.cinema-layout, .theater-layout {
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.screen-area, .stage-area {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.screen, .stage {
+    background: #343a40;
+    color: white;
+    padding: 15px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 18px;
+    display: inline-block;
+    min-width: 200px;
+}
+
+.cinema-seats, .theater-seats {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cinema-row, .theater-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 8px 0;
+}
+
+.row-label {
+    min-width: 80px;
+    font-size: 14px;
+    color: #495057;
+    text-align: right;
+    padding-right: 10px;
+}
+
+.seats-container {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.seat {
+    width: 35px;
+    height: 35px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 2px solid transparent;
+}
+
+.seat:hover {
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+}
+
+.seat-available {
+    background: #28a745;
+    color: white;
+}
+
+.seat-available:hover {
+    background: #218838;
+    border-color: #1e7e34;
+}
+
+.seat-booked {
+    background: #ffc107;
+    color: #212529;
+}
+
+.seat-booked:hover {
+    background: #e0a800;
+    border-color: #d39e00;
+}
+
+.seat-sold {
+    background: #dc3545;
+    color: white;
+}
+
+.seat-sold:hover {
+    background: #c82333;
+    border-color: #bd2130;
+}
+
+.seat-blocked {
+    background: #6c757d;
+    color: white;
+    cursor: not-allowed;
+}
+
+.seat-blocked:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.seat-number {
+    font-size: 10px;
+    line-height: 1;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .cinema-row, .theater-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .row-label {
+        text-align: left;
+        min-width: auto;
+        padding-right: 0;
+    }
+    
+    .seats-container {
+        width: 100%;
+        justify-content: flex-start;
+    }
+    
+    .seat {
+        width: 30px;
+        height: 30px;
+        font-size: 10px;
+    }
+    
+    .screen, .stage {
+        padding: 10px 20px;
+        font-size: 16px;
+        min-width: 150px;
+    }
+}
+</style>
