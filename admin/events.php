@@ -25,6 +25,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'image_url' => sanitizeInput($_POST['image_url']),
             'venue_layout' => isset($_POST['venue_layout']) ? $_POST['venue_layout'] : 'none'
         ];
+        
+        // Валидация данных
+        if (empty($data['title']) || empty($data['event_date']) || empty($data['venue']) || 
+            $data['max_capacity'] <= 0 || $data['base_price'] < 0) {
+            $message = 'Пожалуйста, заполните все обязательные поля корректно.';
+            $messageType = 'danger';
+        } else {
 
         if ($_POST['action'] === 'create') {
             $newId = $eventManager->createEvent($data);
@@ -38,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $template = $templates[$data['venue_layout']] ?? null;
                     
                     if ($template) {
+                        // Создаем ценовые категории и сразу создаем места
                         foreach ($template['zones'] as $zoneKey => $zone) {
                             $db->query(
                                 "INSERT INTO price_categories (event_id, name, price, description) VALUES (?, ?, ?, ?)",
@@ -45,9 +53,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
                             $categoryId = $db->lastInsertId();
                             
-                            // Обновляем места с категорией
+                            // Создаем места для этой зоны
                             foreach ($seats as $seat) {
-                                if ($seat['section'] === $zone['name']) {
+                                // Определяем соответствие зоны и секции
+                                $sectionMatch = false;
+                                switch ($zoneKey) {
+                                    case 'vip':
+                                        $sectionMatch = ($seat['section'] === 'VIP');
+                                        break;
+                                    case 'dance_floor':
+                                        $sectionMatch = ($seat['section'] === 'Танцпол');
+                                        break;
+                                    case 'second_floor':
+                                        $sectionMatch = ($seat['section'] === 'Второй этаж');
+                                        break;
+                                    case 'parquet':
+                                        $sectionMatch = ($seat['section'] === 'Партер');
+                                        break;
+                                    case 'balcony':
+                                        $sectionMatch = ($seat['section'] === 'Балкон');
+                                        break;
+                                    case 'orchestra':
+                                        $sectionMatch = ($seat['section'] === 'Партер');
+                                        break;
+                                    case 'mezzanine':
+                                        $sectionMatch = ($seat['section'] === 'Бельэтаж');
+                                        break;
+                                }
+                                
+                                if ($sectionMatch) {
                                     $db->query(
                                         "INSERT INTO seats (event_id, seat_number, `row_number`, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
                                         [$seat['event_id'], $seat['seat_number'], $seat['row_number'], $seat['section'], $categoryId, $seat['status']]
@@ -71,12 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $currentLayout = $currentEvent['venue_layout'] ?? 'none';
             $newLayout = $data['venue_layout'] ?? 'none';
             
-            // Отладочная информация
-            error_log("Updating event ID: $eventId");
-            error_log("Current layout: $currentLayout, New layout: $newLayout");
-            error_log("Update data: " . json_encode($data));
             
-            if ($eventManager->updateEvent($eventId, $data)) {
+            try {
+                if ($eventManager->updateEvent($eventId, $data)) {
                 // Если схема рассадки изменилась, обновляем места
                 if ($currentLayout !== $newLayout && $newLayout !== 'none') {
                     // Удаляем старые места и ценовые категории
@@ -91,6 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $template = $templates[$newLayout] ?? null;
                     
                     if ($template) {
+                        // Создаем ценовые категории и сразу создаем места
                         foreach ($template['zones'] as $zoneKey => $zone) {
                             $db->query(
                                 "INSERT INTO price_categories (event_id, name, price, description) VALUES (?, ?, ?, ?)",
@@ -98,9 +130,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             );
                             $categoryId = $db->lastInsertId();
                             
-                            // Создаем места с категорией
+                            // Создаем места для этой зоны
                             foreach ($seats as $seat) {
-                                if ($seat['section'] === $zone['name']) {
+                                // Определяем соответствие зоны и секции
+                                $sectionMatch = false;
+                                switch ($zoneKey) {
+                                    case 'vip':
+                                        $sectionMatch = ($seat['section'] === 'VIP');
+                                        break;
+                                    case 'dance_floor':
+                                        $sectionMatch = ($seat['section'] === 'Танцпол');
+                                        break;
+                                    case 'second_floor':
+                                        $sectionMatch = ($seat['section'] === 'Второй этаж');
+                                        break;
+                                    case 'parquet':
+                                        $sectionMatch = ($seat['section'] === 'Партер');
+                                        break;
+                                    case 'balcony':
+                                        $sectionMatch = ($seat['section'] === 'Балкон');
+                                        break;
+                                    case 'orchestra':
+                                        $sectionMatch = ($seat['section'] === 'Партер');
+                                        break;
+                                    case 'mezzanine':
+                                        $sectionMatch = ($seat['section'] === 'Бельэтаж');
+                                        break;
+                                }
+                                
+                                if ($sectionMatch) {
                                     $db->query(
                                         "INSERT INTO seats (event_id, seat_number, `row_number`, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
                                         [$seat['event_id'], $seat['seat_number'], $seat['row_number'], $seat['section'], $categoryId, $seat['status']]
@@ -111,13 +169,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 
-                $message = 'Мероприятие успешно обновлено!';
-                $messageType = 'success';
-                $action = 'list';
-            } else {
-                $message = 'Ошибка при обновлении мероприятия.';
+                    $message = 'Мероприятие успешно обновлено!';
+                    $messageType = 'success';
+                    $action = 'list';
+                } else {
+                    $message = 'Ошибка при обновлении мероприятия.';
+                    $messageType = 'danger';
+                }
+            } catch (Exception $e) {
+                $message = 'Ошибка при обновлении мероприятия: ' . $e->getMessage();
                 $messageType = 'danger';
             }
+        }
         }
     } elseif (isset($_POST['delete_id'])) {
         $deleteId = intval($_POST['delete_id']);

@@ -13,7 +13,7 @@ class VenueTemplates {
                 'description' => 'Клуб с VIP зоной сверху, танцполом снизу и вторым этажом по краям',
                 'zones' => [
                     'vip' => [
-                        'name' => 'VIP зона',
+                        'name' => 'VIP',
                         'description' => 'Премиум зона сверху по центру',
                         'capacity' => 80,
                         'price_multiplier' => 2.5
