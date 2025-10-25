@@ -1,81 +1,247 @@
 <?php
-// Проверка прав администратора
-if(!isset($_SESSION['user_id']) || $_SESSION['user_role'] != 'admin') {
-    header("Location: index.php");
-    exit();
-}
+require_once '../config.php';
+require_once '../includes/functions.php';
 
-// Статистика
-$totalEvents = $pdo->query("SELECT COUNT(*) FROM events")->fetchColumn();
-$totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-$totalOrders = $pdo->query("SELECT COUNT(*) FROM orders")->fetchColumn();
-$totalRevenue = $pdo->query("SELECT SUM(total_amount) FROM orders WHERE status = 'paid'")->fetchColumn() ?? 0;
+session_start();
 
-// Последние заказы
-$recentOrders = $pdo->query("SELECT o.*, u.name as user_name, e.title as event_title 
-                            FROM orders o 
-                            JOIN users u ON o.user_id = u.id 
-                            JOIN events e ON o.event_id = e.id 
-                            ORDER BY o.created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$auth = new Auth();
+$auth->requireRole('admin');
+
+$db = Database::getInstance();
+$eventManager = new EventManager();
+$analyticsManager = new AnalyticsManager();
+
+// Получаем статистику
+$stats = [
+    'total_events' => $db->fetch("SELECT COUNT(*) as count FROM events")['count'],
+    'published_events' => $db->fetch("SELECT COUNT(*) as count FROM events WHERE status = 'published'")['count'],
+    'total_users' => $db->fetch("SELECT COUNT(*) as count FROM users WHERE role = 'client'")['count'],
+    'total_bookings' => $db->fetch("SELECT COUNT(*) as count FROM bookings WHERE status = 'confirmed'")['count'],
+    'total_revenue' => $db->fetch("SELECT SUM(amount) as total FROM payments WHERE payment_status = 'completed'")['total'] ?? 0,
+];
+
+// Получаем последние мероприятия
+$recentEvents = $eventManager->getEvents('published', 5);
+
+// Получаем топ мероприятий
+$topEvents = $analyticsManager->getTopEvents(5);
+
+ob_start();
 ?>
 
-<div class="container">
-    <h2>Админ-панель</h2>
-    
-    <div class="admin-stats">
-        <div class="stat-card">
-            <h3>Мероприятия</h3>
-            <div class="stat-number"><?php echo $totalEvents; ?></div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Пользователи</h3>
-            <div class="stat-number"><?php echo $totalUsers; ?></div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Заказы</h3>
-            <div class="stat-number"><?php echo $totalOrders; ?></div>
-        </div>
-        
-        <div class="stat-card">
-            <h3>Выручка</h3>
-            <div class="stat-number"><?php echo number_format($totalRevenue, 2); ?> руб.</div>
+<div class="container-fluid my-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="h3 mb-4">Панель администратора</h1>
         </div>
     </div>
     
-    <div class="admin-content">
-        <div class="recent-orders">
-            <h3>Последние заказы</h3>
-            <table class="admin-table">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Пользователь</th>
-                        <th>Мероприятие</th>
-                        <th>Сумма</th>
-                        <th>Статус</th>
-                        <th>Дата</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php foreach($recentOrders as $order): ?>
-                    <tr>
-                        <td>#<?php echo $order['id']; ?></td>
-                        <td><?php echo htmlspecialchars($order['user_name']); ?></td>
-                        <td><?php echo htmlspecialchars($order['event_title']); ?></td>
-                        <td><?php echo $order['total_amount']; ?> руб.</td>
-                        <td><span class="status-<?php echo $order['status']; ?>"><?php echo $order['status']; ?></span></td>
-                        <td><?php echo date('d.m.Y H:i', strtotime($order['created_at'])); ?></td>
-                    </tr>
-                    <?php endforeach; ?>
-                </tbody>
-            </table>
+    <!-- Статистика -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Всего мероприятий
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $stats['total_events']; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-calendar fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         
-        <div class="admin-actions">
-            <a href="index.php?module=admin&action=events_management" class="btn-primary">Управление мероприятиями</a>
-            <a href="index.php?module=admin&action=users_management" class="btn-secondary">Управление пользователями</a>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Пользователи
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $stats['total_users']; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Бронирования
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo $stats['total_bookings']; ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ticket-alt fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Выручка
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                <?php echo formatPrice($stats['total_revenue']); ?>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-ruble-sign fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Последние мероприятия -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Последние мероприятия</h6>
+                    <a href="events.php" class="btn btn-sm btn-primary">Все мероприятия</a>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($recentEvents)): ?>
+                        <p class="text-muted">Нет мероприятий</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recentEvents as $event): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1"><?php echo htmlspecialchars($event['title']); ?></h6>
+                                        <small class="text-muted">
+                                            <?php echo formatDate($event['event_date'], 'd.m.Y H:i'); ?> • 
+                                            <?php echo htmlspecialchars($event['venue']); ?>
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-<?php echo $event['status'] === 'published' ? 'success' : 'warning'; ?>">
+                                        <?php echo $event['status'] === 'published' ? 'Опубликовано' : 'Черновик'; ?>
+                                    </span>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Топ мероприятий -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Топ мероприятий</h6>
+                    <a href="analytics.php" class="btn btn-sm btn-primary">Подробная аналитика</a>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($topEvents)): ?>
+                        <p class="text-muted">Нет данных</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($topEvents as $event): ?>
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1"><?php echo htmlspecialchars($event['title']); ?></h6>
+                                        <small class="text-muted">
+                                            <?php echo $event['tickets_sold']; ?> билетов продано
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="h6 text-primary mb-0"><?php echo formatPrice($event['revenue']); ?></div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Быстрые действия -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header">
+                    <h6 class="m-0 font-weight-bold text-primary">Быстрые действия</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="events.php?action=create" class="btn btn-primary w-100">
+                                <i class="fas fa-plus me-2"></i>
+                                Создать мероприятие
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="users.php" class="btn btn-info w-100">
+                                <i class="fas fa-users me-2"></i>
+                                Управление пользователями
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="bookings.php" class="btn btn-success w-100">
+                                <i class="fas fa-ticket-alt me-2"></i>
+                                Бронирования
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="analytics.php" class="btn btn-warning w-100">
+                                <i class="fas fa-chart-bar me-2"></i>
+                                Аналитика
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
+<style>
+.border-left-primary {
+    border-left: 0.25rem solid #4e73df !important;
+}
+.border-left-success {
+    border-left: 0.25rem solid #1cc88a !important;
+}
+.border-left-info {
+    border-left: 0.25rem solid #36b9cc !important;
+}
+.border-left-warning {
+    border-left: 0.25rem solid #f6c23e !important;
+}
+</style>
+
+<?php
+$content = ob_get_clean();
+$pageTitle = 'Панель администратора';
+
+include '../header.php';
+?>

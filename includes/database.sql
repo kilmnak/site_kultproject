@@ -1,105 +1,188 @@
--- Создание базы данных
-CREATE DATABASE IF NOT EXISTS kultprosvet CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE kultprosvet;
+-- Создание базы данных для системы "КультПросвет"
+
+CREATE DATABASE IF NOT EXISTS kultproject CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE kultproject;
 
 -- Таблица пользователей
 CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    phone VARCHAR(20),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    role ENUM('user', 'admin') DEFAULT 'user',
+    first_name VARCHAR(100) NOT NULL,
+    last_name VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    role ENUM('admin', 'manager', 'client') DEFAULT 'client',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
-
--- Таблица категорий мероприятий
-CREATE TABLE categories (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(50) NOT NULL,
-    description TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    is_active BOOLEAN DEFAULT TRUE
 );
 
 -- Таблица мероприятий
 CREATE TABLE events (
-    id INT PRIMARY KEY AUTO_INCREMENT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     description TEXT,
-    category_id INT,
     event_date DATETIME NOT NULL,
-    location VARCHAR(255) NOT NULL,
-    venue_layout TEXT, -- Схема зала в JSON
-    min_price DECIMAL(10,2) NOT NULL,
-    max_price DECIMAL(10,2) NOT NULL,
-    total_seats INT NOT NULL,
-    available_seats INT NOT NULL,
-    image VARCHAR(255),
-    status ENUM('active', 'cancelled', 'completed') DEFAULT 'active',
+    venue VARCHAR(255) NOT NULL,
+    address TEXT,
+    organizer_id INT,
+    max_capacity INT NOT NULL,
+    base_price DECIMAL(10,2) NOT NULL,
+    status ENUM('draft', 'published', 'cancelled', 'completed') DEFAULT 'draft',
+    image_url VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (organizer_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- Таблица заказов
-CREATE TABLE orders (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT,
-    event_id INT,
-    total_amount DECIMAL(10,2) NOT NULL,
-    ticket_count INT NOT NULL,
-    status ENUM('pending', 'paid', 'cancelled', 'refunded') DEFAULT 'pending',
-    payment_method VARCHAR(50),
-    payment_status ENUM('pending', 'completed', 'failed') DEFAULT 'pending',
+-- Таблица ценовых категорий
+CREATE TABLE price_categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    description TEXT,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- Таблица схем залов
+CREATE TABLE venue_layouts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    layout_data JSON NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id),
-    FOREIGN KEY (event_id) REFERENCES events(id)
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- Таблица мест
+CREATE TABLE seats (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    seat_number VARCHAR(20) NOT NULL,
+    row_number VARCHAR(10),
+    section VARCHAR(50),
+    price_category_id INT,
+    status ENUM('available', 'booked', 'sold', 'blocked') DEFAULT 'available',
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (price_category_id) REFERENCES price_categories(id) ON DELETE SET NULL,
+    UNIQUE KEY unique_seat (event_id, seat_number)
+);
+
+-- Таблица бронирований
+CREATE TABLE bookings (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    event_id INT NOT NULL,
+    booking_code VARCHAR(20) UNIQUE NOT NULL,
+    status ENUM('pending', 'confirmed', 'cancelled', 'expired') DEFAULT 'pending',
+    expires_at TIMESTAMP NOT NULL,
+    total_amount DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- Таблица заказов билетов
+CREATE TABLE ticket_orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
+    seat_id INT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE,
+    FOREIGN KEY (seat_id) REFERENCES seats(id) ON DELETE CASCADE
 );
 
 -- Таблица билетов
 CREATE TABLE tickets (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT,
-    event_id INT,
-    user_id INT,
-    seat_number VARCHAR(10),
-    price DECIMAL(10,2) NOT NULL,
-    qr_code VARCHAR(255),
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    order_id INT NOT NULL,
+    ticket_code VARCHAR(50) UNIQUE NOT NULL,
+    qr_code VARCHAR(500),
     status ENUM('active', 'used', 'cancelled') DEFAULT 'active',
+    used_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id),
-    FOREIGN KEY (event_id) REFERENCES events(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (order_id) REFERENCES ticket_orders(id) ON DELETE CASCADE
 );
 
 -- Таблица платежей
 CREATE TABLE payments (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    order_id INT,
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    booking_id INT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
-    payment_method VARCHAR(50) NOT NULL,
+    payment_method ENUM('card', 'cash', 'transfer') NOT NULL,
+    payment_status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
     transaction_id VARCHAR(100),
-    status ENUM('pending', 'completed', 'failed', 'refunded') DEFAULT 'pending',
+    payment_data JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (order_id) REFERENCES orders(id)
+    FOREIGN KEY (booking_id) REFERENCES bookings(id) ON DELETE CASCADE
 );
 
+-- Таблица уведомлений
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    type ENUM('email', 'sms', 'push') NOT NULL,
+    subject VARCHAR(255),
+    message TEXT NOT NULL,
+    status ENUM('pending', 'sent', 'failed') DEFAULT 'pending',
+    sent_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Таблица отзывов
+CREATE TABLE reviews (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    event_id INT NOT NULL,
+    rating INT CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    UNIQUE KEY unique_user_event_review (user_id, event_id)
+);
+
+-- Таблица партнеров
+CREATE TABLE partners (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    contact_person VARCHAR(255),
+    email VARCHAR(255),
+    phone VARCHAR(20),
+    commission_rate DECIMAL(5,2) DEFAULT 0.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Таблица статистики
+CREATE TABLE event_statistics (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    event_id INT NOT NULL,
+    total_tickets_sold INT DEFAULT 0,
+    total_revenue DECIMAL(12,2) DEFAULT 0.00,
+    attendance_rate DECIMAL(5,2) DEFAULT 0.00,
+    average_rating DECIMAL(3,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+);
+
+-- Индексы для оптимизации
+CREATE INDEX idx_events_date ON events(event_date);
+CREATE INDEX idx_events_status ON events(status);
+CREATE INDEX idx_seats_event_status ON seats(event_id, status);
+CREATE INDEX idx_bookings_user ON bookings(user_id);
+CREATE INDEX idx_bookings_event ON bookings(event_id);
+CREATE INDEX idx_bookings_status ON bookings(status);
+CREATE INDEX idx_tickets_code ON tickets(ticket_code);
+CREATE INDEX idx_payments_status ON payments(payment_status);
+
 -- Вставка тестовых данных
-INSERT INTO categories (name, description) VALUES
-('concerts', 'Музыкальные концерты и выступления'),
-('theater', 'Театральные постановки'),
-('festivals', 'Фестивали и массовые мероприятия'),
-('exhibitions', 'Выставки и экспозиции');
+INSERT INTO users (email, password, first_name, last_name, role) VALUES
+('admin@kultproject.ru', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Администратор', 'Системы', 'admin'),
+('manager@kultproject.ru', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Менеджер', 'Событий', 'manager');
 
-INSERT INTO events (title, description, category_id, event_date, location, min_price, max_price, total_seats, available_seats, image) VALUES
-('Концерт симфонического оркестра', 'Великолепное исполнение классических произведений', 1, '2024-02-15 19:00:00', 'Концертный зал им. Чайковского', 1500, 5000, 500, 450, 'concert1.jpg'),
-('Театральная премьера "Гамлет"', 'Современная интерпретация классической пьесы', 2, '2024-02-20 18:30:00', 'Московский художественный театр', 2000, 8000, 300, 280, 'theater1.jpg'),
-('Фестиваль современного искусства', 'Выставка современных художников и перформансы', 3, '2024-02-25 12:00:00', 'Центр современной культуры', 800, 2000, 1000, 950, 'festival1.jpg'),
-('Выставка "Искусство эпохи Возрождения"', 'Шедевры живописи и скульптуры', 4, '2024-03-01 10:00:00', 'Государственный музей изобразительных искусств', 500, 1500, 200, 180, 'exhibition1.jpg');
-
--- Создание администратора
-INSERT INTO users (name, email, password, role) VALUES 
-('Администратор', 'admin@kultprosvet.ru', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'admin');
--- Пароль: password
+INSERT INTO events (title, description, event_date, venue, address, max_capacity, base_price, status) VALUES
+('Концерт рок-группы "Металлика"', 'Легендарная рок-группа впервые в России!', '2024-06-15 20:00:00', 'Спорткомплекс "Олимпийский"', 'Олимпийский проспект, 16, Москва', 15000, 5000.00, 'published'),
+('Театральная премьера "Гамлет"', 'Современная интерпретация классической пьесы', '2024-05-20 19:00:00', 'МХТ им. Чехова', 'Камергерский пер., 3, Москва', 800, 2500.00, 'published'),
+('Джазовый фестиваль', 'Международный фестиваль джазовой музыки', '2024-07-10 18:00:00', 'Парк Сокольники', 'Сокольнический Вал, 1, Москва', 5000, 1500.00, 'published');

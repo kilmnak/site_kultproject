@@ -1,36 +1,49 @@
 <?php
-// Конфигурация сайта
+// Конфигурация базы данных
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'kultproject');
+define('DB_USER', 'root');
+define('DB_PASS', '');
+define('DB_CHARSET', 'utf8mb4');
+
+// Настройки сайта
 define('SITE_NAME', 'КультПросвет');
-define('SITE_URL', 'http://localhost/kultprosvet');
-define('DB_HOST', '92.255.109.86');
-define('DB_NAME', 'kultprosvet');
-define('DB_USER', 'kultprosvet');
-define('DB_PASS', 'v9OE2iZqa=&rUf');
+define('SITE_URL', 'http://localhost');
+define('ADMIN_EMAIL', 'admin@kultproject.ru');
 
-// Старт сессии
-session_start();
+// Настройки безопасности
+define('SECRET_KEY', 'your-secret-key-here');
+define('SESSION_LIFETIME', 3600); // 1 час
 
-// Подключение к базе данных
-try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME, DB_USER, DB_PASS);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    $pdo->exec("SET NAMES utf8mb4");
-} catch(PDOException $e) {
-    // Если база данных не существует, создаем ее
-    if($e->getCode() == 1049) {
-        $pdo = new PDO("mysql:host=" . DB_HOST, DB_USER, DB_PASS);
-        $pdo->exec("CREATE DATABASE " . DB_NAME . " CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-        $pdo->exec("USE " . DB_NAME);
-        
-        // Выполняем SQL файл для создания таблиц
-        $sql = file_get_contents('database.sql');
-        $pdo->exec($sql);
-    } else {
-        die("Ошибка подключения к базе данных: " . $e->getMessage());
+// Настройки платежей
+define('PAYMENT_GATEWAY_URL', 'https://payment.example.com');
+define('PAYMENT_API_KEY', 'your-payment-api-key');
+
+// Настройки уведомлений
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_PORT', 587);
+define('SMTP_USER', 'your-email@gmail.com');
+define('SMTP_PASS', 'your-app-password');
+
+// Настройки файлов
+define('UPLOAD_PATH', 'uploads/');
+define('MAX_FILE_SIZE', 5 * 1024 * 1024); // 5MB
+
+// Настройки бронирования
+define('BOOKING_TIMEOUT', 15 * 60); // 15 минут в секундах
+
+// Часовой пояс
+date_default_timezone_set('Europe/Moscow');
+
+// Обработка ошибок
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+// Автозагрузка классов
+spl_autoload_register(function ($class) {
+    $file = __DIR__ . '/classes/' . $class . '.php';
+    if (file_exists($file)) {
+        require_once $file;
     }
-}
-
-// Подключаем функции
-require_once 'includes/database.php';
-$db = new Database();
+});
 ?>
