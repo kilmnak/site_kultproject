@@ -2,6 +2,9 @@
 // logout.php - Выход из системы
 session_start();
 
+// Определяем, откуда пользователь вышел
+$isAdmin = isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+
 // Очищаем все переменные сессии
 $_SESSION = array();
 
@@ -16,7 +19,11 @@ if (ini_get("session.use_cookies")) {
 
 session_destroy();
 
-// Перенаправляем на страницу логина
-header('Location: /admin-login.php?logout=1');
+// Перенаправляем в зависимости от типа пользователя
+if ($isAdmin) {
+    header('Location: /admin-login.php?logout=1');
+} else {
+    header('Location: /?logout=1');
+}
 exit;
 ?>

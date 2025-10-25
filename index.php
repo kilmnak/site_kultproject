@@ -7,11 +7,27 @@ session_start();
 $auth = new Auth();
 $eventManager = new EventManager();
 
+// Обработка сообщений
+$message = '';
+$messageType = '';
+
+if (isset($_GET['logout']) && $_GET['logout'] == '1') {
+    $message = 'Вы успешно вышли из системы.';
+    $messageType = 'success';
+}
+
 // Получаем предстоящие мероприятия
 $upcomingEvents = $eventManager->getUpcomingEvents(6);
 
 ob_start();
 ?>
+
+<?php if ($message): ?>
+<div class="alert alert-<?php echo $messageType; ?> alert-dismissible fade show mt-3 mx-auto" role="alert" style="max-width: 90%;">
+    <?php echo $message; ?>
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+<?php endif; ?>
 
 <div class="hero-section bg-primary text-white py-5">
     <div class="container">
