@@ -16,8 +16,8 @@ if (isset($_GET['logout']) && $_GET['logout'] == '1') {
     $messageType = 'success';
 }
 
-// Получаем предстоящие мероприятия
-$upcomingEvents = $eventManager->getUpcomingEvents(6);
+// Получаем 3 ближайших мероприятия
+$upcomingEvents = $eventManager->getUpcomingEvents(3);
 
 ob_start();
 ?>
@@ -49,7 +49,7 @@ ob_start();
 <div class="container my-5">
     <div class="row">
         <div class="col-12">
-            <h2 class="text-center mb-5">Предстоящие мероприятия</h2>
+            <h2 class="text-center mb-5">Ближайшие мероприятия</h2>
         </div>
     </div>
     
