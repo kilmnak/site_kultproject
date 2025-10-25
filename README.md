@@ -114,7 +114,6 @@ site_kultproject/
 ├── uploads/               # Загруженные файлы
 ├── config.php             # Конфигурация
 ├── header.php             # Шапка сайта
-├── footer.php             # Футер сайта
 ├── index.php              # Главная страница
 ├── about.php              # Страница "О нас"
 ├── contact.php            # Страница "Контакты"
