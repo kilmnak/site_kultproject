@@ -54,7 +54,7 @@ if ($_POST && isset($_POST['action']) && $_POST['action'] === 'process_payment')
 // Получаем детали заказа
 $db = Database::getInstance();
 $orderDetails = $db->fetchAll(
-    "SELECT `to`.*, s.seat_number, s.row_number, s.section, pc.name as category_name 
+    "SELECT `to`.*, s.seat_number, s.`row_number`, s.section, pc.name as category_name 
      FROM ticket_orders `to` 
      JOIN seats s ON `to`.seat_id = s.id 
      LEFT JOIN price_categories pc ON s.price_category_id = pc.id 

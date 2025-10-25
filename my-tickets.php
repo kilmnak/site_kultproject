@@ -18,7 +18,7 @@ $tickets = $db->fetchAll(
         e.event_date,
         e.venue,
         s.seat_number,
-        s.row_number,
+        s.`row_number`,
         s.section,
         pc.name as category_name,
         pc.price

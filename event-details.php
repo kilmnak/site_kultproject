@@ -73,7 +73,7 @@ $seats = $db->fetchAll(
      FROM seats s 
      LEFT JOIN price_categories pc ON s.price_category_id = pc.id 
      WHERE s.event_id = ? 
-     ORDER BY s.row_number, s.seat_number",
+     ORDER BY s.`row_number`, s.seat_number",
     [$eventId]
 );
 

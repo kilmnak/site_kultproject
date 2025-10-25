@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             foreach ($seats as $seat) {
                                 if ($seat['section'] === $zone['name']) {
                                     $db->query(
-                                        "INSERT INTO seats (event_id, seat_number, row_number, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
+                                        "INSERT INTO seats (event_id, seat_number, `row_number`, section, price_category_id, status) VALUES (?, ?, ?, ?, ?, ?)",
                                         [$seat['event_id'], $seat['seat_number'], $seat['row_number'], $seat['section'], $categoryId, $seat['status']]
                                     );
                                 }
