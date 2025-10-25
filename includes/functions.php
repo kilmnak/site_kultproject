@@ -53,6 +53,67 @@ class Auth {
         return true;
     }
     
+    // Админские методы
+    public function adminLogin($email, $password) {
+        // Проверяем, есть ли пользователи в системе
+        $userCount = $this->db->fetch("SELECT COUNT(*) as count FROM users")['count'];
+        
+        // Если пользователей нет, создаем первого администратора
+        if ($userCount == 0) {
+            $this->createFirstAdmin();
+        }
+        
+        // Проверяем логин администратора
+        $user = $this->db->fetch(
+            "SELECT * FROM users WHERE email = ? AND role IN ('admin', 'manager') AND is_active = 1",
+            [$email]
+        );
+        
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['user_email'] = $user['email'];
+            $_SESSION['user_role'] = $user['role'];
+            $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
+            $_SESSION['is_admin'] = true;
+            return true;
+        }
+        
+        return false;
+    }
+    
+    private function createFirstAdmin() {
+        $hashedPassword = password_hash(FIRST_ADMIN_PASSWORD, PASSWORD_DEFAULT);
+        
+        $this->db->query(
+            "INSERT INTO users (email, password, first_name, last_name, role, is_active) VALUES (?, ?, ?, ?, 'admin', 1)",
+            [FIRST_ADMIN_EMAIL, $hashedPassword, FIRST_ADMIN_FIRST_NAME, FIRST_ADMIN_LAST_NAME]
+        );
+    }
+    
+    public function requireRole($requiredRole) {
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_role'])) {
+            header('Location: /admin-login.php');
+            exit;
+        }
+        
+        $userRole = $_SESSION['user_role'];
+        
+        // Проверяем права доступа
+        if ($requiredRole === 'admin' && $userRole !== 'admin') {
+            header('Location: /admin-login.php?error=access_denied');
+            exit;
+        }
+        
+        if ($requiredRole === 'manager' && !in_array($userRole, ['admin', 'manager'])) {
+            header('Location: /admin-login.php?error=access_denied');
+            exit;
+        }
+    }
+    
+    public function isAdmin() {
+        return isset($_SESSION['is_admin']) && $_SESSION['is_admin'] === true;
+    }
+    
     public function isLoggedIn() {
         return isset($_SESSION['user_id']);
     }
@@ -79,7 +140,7 @@ class Auth {
         }
     }
     
-    public function requireRole($role) {
+    public function requireUserRole($role) {
         $this->requireLogin();
         if (!$this->hasRole($role)) {
             header('Location: /403.php');

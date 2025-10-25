@@ -15,6 +15,12 @@ define('ADMIN_EMAIL', 'admin@kultproject.ru');
 define('SECRET_KEY', 'your-secret-key-here');
 define('SESSION_LIFETIME', 3600); // 1 час
 
+// Настройки первого администратора
+define('FIRST_ADMIN_EMAIL', 'admin@kultproject.ru');
+define('FIRST_ADMIN_PASSWORD', 'admin123'); // Измените пароль после первого входа
+define('FIRST_ADMIN_FIRST_NAME', 'Администратор');
+define('FIRST_ADMIN_LAST_NAME', 'Системы');
+
 // Настройки платежей
 define('PAYMENT_GATEWAY_URL', 'https://payment.example.com');
 define('PAYMENT_API_KEY', 'your-payment-api-key');

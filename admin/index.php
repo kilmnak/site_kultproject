@@ -1,4 +1,5 @@
 <?php
+// admin/index.php - Главная страница админ-панели с маршрутизацией
 require_once '../config.php';
 require_once '../includes/functions.php';
 
@@ -16,6 +17,11 @@ $allowedPages = ['dashboard', 'events', 'users', 'analytics', 'settings'];
 if (!in_array($page, $allowedPages)) {
     $page = 'dashboard';
 }
+
+// Передаем переменные в подключаемые файлы
+$GLOBALS['page'] = $page;
+$GLOBALS['action'] = $action;
+$GLOBALS['id'] = $id;
 
 // Загружаем соответствующую страницу
 switch ($page) {
