@@ -436,7 +436,7 @@ ob_start();
                 </div>
                 <div class="card-body">
                     <form method="POST">
-                        <input type="hidden" name="action" value="<?php echo $action; ?>">
+                        <input type="hidden" name="action" value="<?php echo $action === 'edit' ? 'update' : $action; ?>">
                         
                         <div class="row">
                             <div class="col-md-8">
