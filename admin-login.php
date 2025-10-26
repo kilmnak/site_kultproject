@@ -164,19 +164,6 @@ if (isset($_GET['logout'])) {
                             </div>
                         </form>
                         
-                        <div class="admin-info">
-                            <h6 class="text-primary mb-2">
-                                <i class="fas fa-info-circle me-2"></i>
-                                Информация для первого входа
-                            </h6>
-                            <p class="mb-1"><strong>Email:</strong> <?php echo FIRST_ADMIN_EMAIL; ?></p>
-                            <p class="mb-0"><strong>Пароль:</strong> <?php echo FIRST_ADMIN_PASSWORD; ?></p>
-                            <small class="text-muted">
-                                <i class="fas fa-exclamation-triangle me-1"></i>
-                                Обязательно смените пароль после первого входа!
-                            </small>
-                        </div>
-                        
                         <div class="text-center mt-4">
                             <a href="/" class="text-decoration-none">
                                 <i class="fas fa-arrow-left me-2"></i>
