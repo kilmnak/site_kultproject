@@ -418,9 +418,9 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateSeatVisuals() {
-        document.querySelectorAll('.seat-btn').forEach(btn => {
+        document.querySelectorAll('.seat-btn, .seat').forEach(btn => {
             btn.classList.remove('seat-selected');
-            const checkbox = btn.querySelector('.seat-checkbox');
+            const checkbox = btn.querySelector('input[type="checkbox"]');
             if (checkbox && selectedSeats.includes(checkbox.value)) {
                 btn.classList.add('seat-selected');
             }
@@ -434,7 +434,8 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Обновляем список выбранных мест
             const seatDetails = selectedSeats.map(seatId => {
-                const seatBtn = document.querySelector(`input[value="${seatId}"]`).closest('.seat-btn');
+                const checkbox = document.querySelector(`input[value="${seatId}"]`);
+                const seatBtn = checkbox.closest('.seat-btn, .seat');
                 const seatNumber = seatBtn.querySelector('.seat-number').textContent;
                 const price = seatBtn.dataset.price;
                 const category = seatBtn.dataset.category;
@@ -458,8 +459,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function calculateTotalPrice() {
         return selectedSeats.reduce((total, seatId) => {
-            const seatBtn = document.querySelector(`input[value="${seatId}"]`).closest('.seat-btn');
-            return total + parseFloat(seatBtn.dataset.price || 0);
+            const checkbox = document.querySelector(`input[value="${seatId}"]`);
+            const seatBtn = checkbox ? checkbox.closest('.seat-btn, .seat') : null;
+            return total + (seatBtn ? parseFloat(seatBtn.dataset.price || 0) : 0);
         }, 0).toLocaleString();
     }
 });

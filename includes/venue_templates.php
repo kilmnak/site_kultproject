@@ -264,10 +264,14 @@ class VenueTemplates {
         
         foreach ($vipSeats as $seat) {
             $statusClass = self::getSeatStatusClass($seat['status']);
-            $html .= '<div class="seat vip-seat ' . $statusClass . '" data-seat-id="' . $seat['id'] . '">';
+            $disabled = $seat['status'] !== 'available' ? 'disabled' : '';
+            $price = $seat['price'] ?? 0;
+            $category = htmlspecialchars($seat['category_name'] ?? 'Стандарт');
+            $html .= '<label class="seat vip-seat ' . $statusClass . '" data-price="' . $price . '" data-category="' . $category . '">';
+            $html .= '<input type="checkbox" name="seat_ids[]" value="' . $seat['id'] . '" ' . $disabled . ' class="seat-checkbox d-none">';
             $html .= '<span class="seat-number">' . $seat['seat_number'] . '</span>';
-            $html .= '<small class="seat-price">' . number_format($seat['price']) . ' ₽</small>';
-            $html .= '</div>';
+            $html .= '<small class="seat-price">' . number_format($price) . ' ₽</small>';
+            $html .= '</label>';
         }
         
         $html .= '</div></div>';
@@ -283,10 +287,14 @@ class VenueTemplates {
         
         foreach ($danceSeats as $seat) {
             $statusClass = self::getSeatStatusClass($seat['status']);
-            $html .= '<div class="seat dance-seat ' . $statusClass . '" data-seat-id="' . $seat['id'] . '">';
+            $disabled = $seat['status'] !== 'available' ? 'disabled' : '';
+            $price = $seat['price'] ?? 0;
+            $category = htmlspecialchars($seat['category_name'] ?? 'Стандарт');
+            $html .= '<label class="seat dance-seat ' . $statusClass . '" data-price="' . $price . '" data-category="' . $category . '">';
+            $html .= '<input type="checkbox" name="seat_ids[]" value="' . $seat['id'] . '" ' . $disabled . ' class="seat-checkbox d-none">';
             $html .= '<span class="seat-number">' . $seat['seat_number'] . '</span>';
-            $html .= '<small class="seat-price">' . number_format($seat['price']) . ' ₽</small>';
-            $html .= '</div>';
+            $html .= '<small class="seat-price">' . number_format($price) . ' ₽</small>';
+            $html .= '</label>';
         }
         
         $html .= '</div></div>';
@@ -302,10 +310,14 @@ class VenueTemplates {
         
         foreach ($secondFloorSeats as $seat) {
             $statusClass = self::getSeatStatusClass($seat['status']);
-            $html .= '<div class="seat second-floor-seat ' . $statusClass . '" data-seat-id="' . $seat['id'] . '">';
+            $disabled = $seat['status'] !== 'available' ? 'disabled' : '';
+            $price = $seat['price'] ?? 0;
+            $category = htmlspecialchars($seat['category_name'] ?? 'Стандарт');
+            $html .= '<label class="seat second-floor-seat ' . $statusClass . '" data-price="' . $price . '" data-category="' . $category . '">';
+            $html .= '<input type="checkbox" name="seat_ids[]" value="' . $seat['id'] . '" ' . $disabled . ' class="seat-checkbox d-none">';
             $html .= '<span class="seat-number">' . $seat['seat_number'] . '</span>';
-            $html .= '<small class="seat-price">' . number_format($seat['price']) . ' ₽</small>';
-            $html .= '</div>';
+            $html .= '<small class="seat-price">' . number_format($price) . ' ₽</small>';
+            $html .= '</label>';
         }
         
         $html .= '</div></div>';
@@ -340,9 +352,13 @@ class VenueTemplates {
             
             foreach ($rowSeats as $seat) {
                 $statusClass = self::getSeatStatusClass($seat['status']);
-                $html .= '<div class="seat cinema-seat ' . $statusClass . '" data-seat-id="' . $seat['id'] . '">';
+                $disabled = $seat['status'] !== 'available' ? 'disabled' : '';
+                $price = $seat['price'] ?? 0;
+                $category = htmlspecialchars($seat['category_name'] ?? 'Стандарт');
+                $html .= '<label class="seat cinema-seat ' . $statusClass . '" data-price="' . $price . '" data-category="' . $category . '">';
+                $html .= '<input type="checkbox" name="seat_ids[]" value="' . $seat['id'] . '" ' . $disabled . ' class="seat-checkbox d-none">';
                 $html .= '<span class="seat-number">' . $seat['seat_number'] . '</span>';
-                $html .= '</div>';
+                $html .= '</label>';
             }
             
             $html .= '</div></div>';
@@ -379,9 +395,13 @@ class VenueTemplates {
             
             foreach ($rowSeats as $seat) {
                 $statusClass = self::getSeatStatusClass($seat['status']);
-                $html .= '<div class="seat theater-seat ' . $statusClass . '" data-seat-id="' . $seat['id'] . '">';
+                $disabled = $seat['status'] !== 'available' ? 'disabled' : '';
+                $price = $seat['price'] ?? 0;
+                $category = htmlspecialchars($seat['category_name'] ?? 'Стандарт');
+                $html .= '<label class="seat theater-seat ' . $statusClass . '" data-price="' . $price . '" data-category="' . $category . '">';
+                $html .= '<input type="checkbox" name="seat_ids[]" value="' . $seat['id'] . '" ' . $disabled . ' class="seat-checkbox d-none">';
                 $html .= '<span class="seat-number">' . $seat['seat_number'] . '</span>';
-                $html .= '</div>';
+                $html .= '</label>';
             }
             
             $html .= '</div></div>';
@@ -472,7 +492,7 @@ class VenueTemplates {
     width: 28px;
     height: 28px;
     border-radius: 4px;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     font-size: 9px;
@@ -481,6 +501,13 @@ class VenueTemplates {
     transition: all 0.2s ease;
     border: 1px solid transparent;
     flex-shrink: 0;
+    margin: 1px;
+    padding: 0;
+    text-align: center;
+}
+
+.seat input {
+    display: none;
 }
 
 .seat:hover {
@@ -527,6 +554,14 @@ class VenueTemplates {
 .seat-blocked:hover {
     transform: none;
     box-shadow: none;
+}
+
+.seat-selected {
+    transform: scale(1.1) !important;
+    box-shadow: 0 0 20px rgba(0, 123, 255, 0.8) !important;
+    border-color: #007bff !important;
+    background: #007bff !important;
+    color: white !important;
 }
 
 .seat-number {
