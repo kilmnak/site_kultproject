@@ -25,29 +25,25 @@ if (strtotime($booking['expires_at']) < time()) {
 
 // Обработка оплаты
 if ($_POST && isset($_POST['action']) && $_POST['action'] === 'process_payment') {
-    $paymentMethod = $_POST['payment_method'] ?? '';
-    $cardNumber = $_POST['card_number'] ?? '';
-    $cardExpiry = $_POST['card_expiry'] ?? '';
-    $cardCvv = $_POST['card_cvv'] ?? '';
+    $paymentMethod = $_POST['payment_method'] ?? 'card';
     
-    if ($paymentMethod === 'card' && (empty($cardNumber) || empty($cardExpiry) || empty($cardCvv))) {
-        showMessage('Заполните все поля для оплаты картой', 'error');
-    } else {
-        try {
-            // Здесь должна быть интеграция с платежной системой
-            $paymentData = [
-                'method' => $paymentMethod,
-                'transaction_id' => 'TXN_' . time() . '_' . rand(1000, 9999),
-                'card_number' => $paymentMethod === 'card' ? substr($cardNumber, -4) : null,
-                'amount' => $booking['total_amount']
-            ];
-            
-            $bookingManager->confirmBooking($bookingId, $paymentData);
-            showMessage('Оплата прошла успешно! Билеты отправлены на ваш email.', 'success');
-            redirect('/my-tickets.php');
-        } catch (Exception $e) {
-            showMessage('Ошибка при обработке платежа: ' . $e->getMessage(), 'error');
-        }
+    try {
+        // Заглушка для оплаты - всегда успешна
+        $paymentData = [
+            'method' => $paymentMethod,
+            'transaction_id' => 'TXN_' . time() . '_' . rand(1000, 9999),
+            'card_number' => $paymentMethod === 'card' ? '****' : null,
+            'amount' => $booking['total_amount']
+        ];
+        
+        // Подтверждаем бронирование и создаем билеты
+        $bookingManager->confirmBooking($bookingId, $paymentData);
+        
+        // Показываем сообщение об успехе
+        showMessage('Билеты успешно куплены! Вы можете увидеть их в разделе "Мои билеты".', 'success');
+        redirect('/my-tickets.php');
+    } catch (Exception $e) {
+        showMessage('Ошибка при обработке платежа: ' . $e->getMessage(), 'error');
     }
 }
 
@@ -154,36 +150,15 @@ ob_start();
                             </div>
                         </div>
                         
-                        <!-- Данные карты -->
-                        <div id="cardDetails" class="mb-4">
-                            <div class="row">
-                                <div class="col-md-8 mb-3">
-                                    <label for="card_number" class="form-label">Номер карты</label>
-                                    <input type="text" class="form-control" id="card_number" name="card_number" 
-                                           placeholder="1234 5678 9012 3456" maxlength="19">
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label for="card_expiry" class="form-label">Срок</label>
-                                    <input type="text" class="form-control" id="card_expiry" name="card_expiry" 
-                                           placeholder="MM/YY" maxlength="5">
-                                </div>
-                                <div class="col-md-2 mb-3">
-                                    <label for="card_cvv" class="form-label">CVV</label>
-                                    <input type="text" class="form-control" id="card_cvv" name="card_cvv" 
-                                           placeholder="123" maxlength="3">
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="alert alert-info">
+                        <div class="alert alert-success">
                             <i class="fas fa-info-circle me-2"></i>
-                            После успешной оплаты билеты будут отправлены на ваш email: 
-                            <strong><?php echo htmlspecialchars($_SESSION['user_email']); ?></strong>
+                            <strong>Тестовый режим:</strong> Оплата проходит автоматически. 
+                            Билеты будут доступны в разделе "Мои билеты".
                         </div>
                         
                         <button type="submit" class="btn btn-success btn-lg w-100">
-                            <i class="fas fa-credit-card me-2"></i>
-                            Оплатить <?php echo formatPrice($booking['total_amount']); ?>
+                            <i class="fas fa-check-circle me-2"></i>
+                            Подтвердить покупку <?php echo formatPrice($booking['total_amount']); ?>
                         </button>
                     </form>
                 </div>
@@ -238,42 +213,15 @@ ob_start();
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
-    const cardDetails = document.getElementById('cardDetails');
-    
-    paymentMethodRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            if (this.value === 'card') {
-                cardDetails.style.display = 'block';
-            } else {
-                cardDetails.style.display = 'none';
+    // Простая валидация формы
+    const paymentForm = document.getElementById('paymentForm');
+    if (paymentForm) {
+        paymentForm.addEventListener('submit', function(e) {
+            if (!confirm('Подтвердите покупку билетов?')) {
+                e.preventDefault();
             }
         });
-    });
-    
-    // Форматирование номера карты
-    const cardNumberInput = document.getElementById('card_number');
-    cardNumberInput.addEventListener('input', function() {
-        let value = this.value.replace(/\s/g, '').replace(/[^0-9]/gi, '');
-        let formattedValue = value.match(/.{1,4}/g)?.join(' ') || value;
-        this.value = formattedValue;
-    });
-    
-    // Форматирование срока действия
-    const cardExpiryInput = document.getElementById('card_expiry');
-    cardExpiryInput.addEventListener('input', function() {
-        let value = this.value.replace(/\D/g, '');
-        if (value.length >= 2) {
-            value = value.substring(0, 2) + '/' + value.substring(2, 4);
-        }
-        this.value = value;
-    });
-    
-    // Только цифры для CVV
-    const cardCvvInput = document.getElementById('card_cvv');
-    cardCvvInput.addEventListener('input', function() {
-        this.value = this.value.replace(/\D/g, '');
-    });
+    }
 });
 </script>
 

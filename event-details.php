@@ -35,6 +35,7 @@ if ($_POST && isset($_POST['action']) && $_POST['action'] === 'book_tickets') {
         showMessage('Количество выбранных мест должно соответствовать количеству билетов', 'error');
     } else {
         try {
+            $db = Database::getInstance();
             // Проверяем доступность мест
             $availableSeats = $db->fetchAll(
                 "SELECT id FROM seats WHERE id IN (" . implode(',', array_map('intval', $seatIds)) . ") AND status = 'available' AND event_id = ?",
