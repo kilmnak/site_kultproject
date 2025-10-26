@@ -147,20 +147,23 @@ ob_start();
                             <!-- Выбор количества билетов -->
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <label for="ticketQuantity" class="form-label">
+                                    <label class="form-label">
                                         <i class="fas fa-ticket-alt me-1"></i>Количество билетов
                                     </label>
-                                    <select class="form-select" id="ticketQuantity" name="ticket_quantity" required>
-                                        <option value="">Выберите количество</option>
-                                        <option value="1">1 билет</option>
-                                        <option value="2">2 билета</option>
-                                        <option value="3">3 билета</option>
-                                        <option value="4">4 билета</option>
-                                        <option value="5">5 билетов</option>
-                                        <option value="6">6 билетов</option>
-                                        <option value="7">7 билетов</option>
-                                        <option value="8">8 билетов</option>
-                                    </select>
+                                    <div class="d-flex align-items-center gap-3">
+                                        <button type="button" class="btn btn-outline-secondary" id="decreaseTicket" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-minus"></i>
+                                        </button>
+                                        <input type="number" class="form-control text-center" id="ticketQuantity" name="ticket_quantity" 
+                                               value="0" min="0" max="8" required style="width: 100px; font-size: 1.25rem; font-weight: bold;">
+                                        <button type="button" class="btn btn-outline-primary" id="increaseTicket" style="width: 50px; height: 50px;">
+                                            <i class="fas fa-plus"></i>
+                                        </button>
+                                        <span class="ms-2">
+                                            <span id="ticketLabel">билетов</span>
+                                        </span>
+                                    </div>
+                                    <input type="hidden" id="ticketQuantityHidden" name="ticket_quantity" value="0">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Информация</label>
@@ -358,14 +361,73 @@ document.addEventListener('DOMContentLoaded', function() {
     const totalPriceDiv = document.getElementById('totalPrice');
     const bookButton = document.getElementById('bookButton');
     const clearButton = document.getElementById('clearSelection');
-    const ticketQuantitySelect = document.getElementById('ticketQuantity');
+    const ticketQuantityInput = document.getElementById('ticketQuantity');
+    const ticketQuantityHidden = document.getElementById('ticketQuantityHidden');
+    const increaseButton = document.getElementById('increaseTicket');
+    const decreaseButton = document.getElementById('decreaseTicket');
+    const ticketLabel = document.getElementById('ticketLabel');
     
     let maxSeats = 0;
     let selectedSeats = [];
     
-    // Обработчик изменения количества билетов
-    ticketQuantitySelect.addEventListener('change', function() {
-        maxSeats = parseInt(this.value) || 0;
+    // Функция для получения правильного склонения слова "билет"
+    function getTicketWord(count) {
+        if (count === 0) return 'билетов';
+        if (count % 10 === 1 && count % 100 !== 11) return 'билет';
+        if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) return 'билета';
+        return 'билетов';
+    }
+    
+    // Функция для обновления метки
+    function updateTicketLabel(count) {
+        ticketLabel.textContent = `${count} ${getTicketWord(count)}`;
+    }
+    
+    // Инициализация при загрузке
+    updateTicketLabel(0);
+    
+    // Обработчик кнопки увеличения
+    increaseButton.addEventListener('click', function() {
+        const currentValue = parseInt(ticketQuantityInput.value) || 0;
+        if (currentValue < 8) {
+            ticketQuantityInput.value = currentValue + 1;
+            ticketQuantityHidden.value = currentValue + 1;
+            maxSeats = currentValue + 1;
+            updateTicketLabel(maxSeats);
+            clearAllSelections();
+            updateUI();
+        }
+    });
+    
+    // Обработчик кнопки уменьшения
+    decreaseButton.addEventListener('click', function() {
+        const currentValue = parseInt(ticketQuantityInput.value) || 0;
+        if (currentValue > 0) {
+            ticketQuantityInput.value = currentValue - 1;
+            ticketQuantityHidden.value = currentValue - 1;
+            maxSeats = currentValue - 1;
+            updateTicketLabel(maxSeats);
+            clearAllSelections();
+            updateUI();
+        }
+    });
+    
+    // Обработчик изменения количества билетов через input
+    ticketQuantityInput.addEventListener('change', function() {
+        const value = parseInt(this.value) || 0;
+        if (value < 0) {
+            this.value = 0;
+            ticketQuantityHidden.value = 0;
+            maxSeats = 0;
+        } else if (value > 8) {
+            this.value = 8;
+            ticketQuantityHidden.value = 8;
+            maxSeats = 8;
+        } else {
+            ticketQuantityHidden.value = value;
+            maxSeats = value;
+        }
+        updateTicketLabel(maxSeats);
         clearAllSelections();
         updateUI();
     });
@@ -374,6 +436,11 @@ document.addEventListener('DOMContentLoaded', function() {
     checkboxes.forEach(checkbox => {
         checkbox.addEventListener('change', function() {
             if (this.checked) {
+                if (maxSeats === 0) {
+                    this.checked = false;
+                    alert('Сначала выберите количество билетов');
+                    return;
+                }
                 if (selectedSeats.length >= maxSeats) {
                     this.checked = false;
                     alert(`Максимальное количество мест: ${maxSeats}`);
@@ -393,7 +460,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Обработчик отправки формы
     document.getElementById('bookingForm').addEventListener('submit', function(e) {
-        if (!ticketQuantitySelect.value) {
+        if (maxSeats === 0) {
             e.preventDefault();
             alert('Выберите количество билетов');
             return;
@@ -401,11 +468,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (selectedSeats.length !== maxSeats) {
             e.preventDefault();
-            alert(`Выберите ровно ${maxSeats} мест`);
+            alert(`Выберите ровно ${maxSeats} ${getTicketWord(maxSeats)}`);
             return;
         }
         
-        if (!confirm(`Подтвердите покупку ${maxSeats} билетов на сумму ${calculateTotalPrice()} ₽?`)) {
+        if (!confirm(`Подтвердите покупку ${maxSeats} ${getTicketWord(maxSeats)} на сумму ${calculateTotalPrice()} ₽?`)) {
             e.preventDefault();
         }
     });
@@ -446,14 +513,17 @@ document.addEventListener('DOMContentLoaded', function() {
             totalPriceDiv.innerHTML = `<strong>Общая стоимость: ${calculateTotalPrice()} ₽</strong>`;
             
             bookButton.disabled = selectedSeats.length !== maxSeats;
-            bookButton.textContent = selectedSeats.length === maxSeats ? 
-                `Перейти к оплате (${calculateTotalPrice()} ₽)` : 
-                `Выберите еще ${maxSeats - selectedSeats.length} мест`;
+            if (selectedSeats.length === maxSeats) {
+                bookButton.textContent = `Перейти к оплате (${calculateTotalPrice()} ₽)`;
+            } else {
+                const remaining = maxSeats - selectedSeats.length;
+                bookButton.textContent = `Выберите еще ${remaining} ${getTicketWord(remaining)}`;
+            }
         } else {
             selectedSeatsDiv.style.display = 'none';
             clearButton.style.display = 'none';
             bookButton.disabled = true;
-            bookButton.textContent = 'Перейти к оплате';
+            bookButton.textContent = 'Выберите места';
         }
     }
     
